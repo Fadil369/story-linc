@@ -1,0 +1,15 @@
+{
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b --noCheck && vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --fix",
+    "deploy": "./deploy.sh",
+    "deploy:pages": "wrangler pages deploy dist --project-name=story-weaver",
+    "deploy:worker": "wrangler deploy",
+    "setup:kv": "wrangler kv:namespace create STORIES_KV && wrangler kv:namespace create ANALYTICS_KV",
+    "logs": "wrangler tail",
+    "analyze": "npm run build && npx vite-bundle-analyzer dist",
+    "clean": "rm -rf dist node_modules/.vite"
+  }
+}
