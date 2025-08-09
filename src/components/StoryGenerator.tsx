@@ -13,6 +13,7 @@ import { StoryTemplates } from './StoryTemplates'
 import { type StoryTemplate } from '../data/storyTemplates'
 import { spark } from '../lib/mockStoryGenerator'
 import { logger } from '../lib/logger'
+import { trackStoryGenerated, trackStorySaved, trackUserAction } from '../lib/analytics'
 import { toast } from 'sonner'
 
 interface StoryGeneratorProps {
@@ -99,6 +100,9 @@ export function StoryGenerator({
         hasCharacters: newStory.characters.length > 0,
         hasThemes: newStory.themes.length > 0
       })
+      
+      // Track analytics
+      trackStoryGenerated(newStory)
       
       setGeneratedStory(newStory)
       setShowRecommendations(true)
@@ -220,6 +224,13 @@ Title: [Story Title]
         language: generatedStory.language,
         hasCollection: !!generatedStory.collectionId,
         hasCategory: !!generatedStory.categoryId,
+        wordCount: generatedStory.content.split(' ').length
+      })
+      
+      // Track analytics
+      trackStorySaved(generatedStory)
+      trackUserAction('save_story', {
+        language: generatedStory.language,
         wordCount: generatedStory.content.split(' ').length
       })
       
