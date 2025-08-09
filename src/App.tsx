@@ -246,6 +246,8 @@ function App() {
             recentStories={stories.slice(0, 5)}
             collections={collections}
             categories={categories}
+            onCreateCollection={createCollection}
+            onAddToCollection={addStoryToCollection}
           />
         ) : activeView === 'history' ? (
           <StoryHistory 
@@ -261,6 +263,7 @@ function App() {
             onAddToCollection={addStoryToCollection}
             onRemoveFromCollection={removeStoryFromCollection}
             onUpdateCategory={updateStoryCategory}
+            onCreateCollection={createCollection}
           />
         ) : (
           <CollectionsView

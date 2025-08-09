@@ -5,8 +5,9 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
-import { Sparkles, Wand, Languages, FolderOpen, Tag } from '@phosphor-icons/react'
+import { Sparkles, Wand, Languages, FolderOpen, Tag, BookOpen } from '@phosphor-icons/react'
 import { Story, StoryContext, Collection, Category } from '../App'
+import { SmartRecommendations } from './SmartRecommendations'
 import { toast } from 'sonner'
 
 interface StoryGeneratorProps {
@@ -15,14 +16,25 @@ interface StoryGeneratorProps {
   recentStories: Story[]
   collections: Collection[]
   categories: Category[]
+  onCreateCollection: (name: string, description: string, color: string) => Collection
+  onAddToCollection: (storyId: string, collectionId: string) => void
 }
 
-export function StoryGenerator({ onStoryGenerated, context, recentStories, collections, categories }: StoryGeneratorProps) {
+export function StoryGenerator({ 
+  onStoryGenerated, 
+  context, 
+  recentStories, 
+  collections, 
+  categories,
+  onCreateCollection,
+  onAddToCollection
+}: StoryGeneratorProps) {
   const [prompt, setPrompt] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [generatedStory, setGeneratedStory] = useState<Story | null>(null)
   const [selectedCollection, setSelectedCollection] = useState<string>('')
   const [selectedCategory, setSelectedCategory] = useState<string>('')
+  const [showRecommendations, setShowRecommendations] = useState(false)
 
   const detectLanguage = (text: string): 'ar' | 'en' => {
     const arabicRegex = /[\u0600-\u06FF]/
@@ -65,6 +77,7 @@ export function StoryGenerator({ onStoryGenerated, context, recentStories, colle
       }
       
       setGeneratedStory(newStory)
+      setShowRecommendations(true)
     } catch (error) {
       console.error('Error generating story:', error)
       toast.error('Failed to generate story. Please try again.')
@@ -172,173 +185,197 @@ Title: [Story Title]
       onStoryGenerated(generatedStory)
       setGeneratedStory(null)
       setPrompt('')
+      setShowRecommendations(false)
     }
   }
 
   const generateNewStory = () => {
     setGeneratedStory(null)
+    setShowRecommendations(false)
   }
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Wand className="w-5 h-5 text-primary" />
-            Create Your Story
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <label htmlFor="story-prompt" className="text-sm font-medium text-foreground">
-              Story Prompt
-            </label>
-            <Textarea
-              id="story-prompt"
-              placeholder="Enter your story idea in English or Arabic... / أدخل فكرة قصتك بالعربية أو الإنجليزية..."
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              className="min-h-24 resize-none"
-              dir="auto"
-            />
-          </div>
-          
-          {prompt && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Languages className="w-4 h-4" />
-              Detected language: {detectLanguage(prompt) === 'ar' ? 'Arabic العربية' : 'English'}
-            </div>
-          )}
+      <div className={`grid gap-6 ${generatedStory && showRecommendations ? 'lg:grid-cols-12' : ''}`}>
+        {/* Main Story Generation Section */}
+        <div className={`space-y-6 ${generatedStory && showRecommendations ? 'lg:col-span-8' : ''}`}>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Wand className="w-5 h-5 text-primary" />
+                Create Your Story
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <label htmlFor="story-prompt" className="text-sm font-medium text-foreground">
+                  Story Prompt
+                </label>
+                <Textarea
+                  id="story-prompt"
+                  placeholder="Enter your story idea in English or Arabic... / أدخل فكرة قصتك بالعربية أو الإنجليزية..."
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  className="min-h-24 resize-none"
+                  dir="auto"
+                />
+              </div>
+              
+              {prompt && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Languages className="w-4 h-4" />
+                  Detected language: {detectLanguage(prompt) === 'ar' ? 'Arabic العربية' : 'English'}
+                </div>
+              )}
 
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="category-select" className="text-sm font-medium flex items-center gap-2">
-                <Tag className="w-4 h-4" />
-                Category (Optional)
-              </Label>
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger id="category-select">
-                  <SelectValue placeholder="Select a category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">No Category</SelectItem>
-                  {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      <div className="flex items-center gap-2">
-                        <div className={`w-3 h-3 rounded-full ${category.color}`} />
-                        {category.name}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="category-select" className="text-sm font-medium flex items-center gap-2">
+                    <Tag className="w-4 h-4" />
+                    Category (Optional)
+                  </Label>
+                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                    <SelectTrigger id="category-select">
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">No Category</SelectItem>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          <div className="flex items-center gap-2">
+                            <div className={`w-3 h-3 rounded-full ${category.color}`} />
+                            {category.name}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="collection-select" className="text-sm font-medium flex items-center gap-2">
-                <FolderOpen className="w-4 h-4" />
-                Collection (Optional)
-              </Label>
-              <Select value={selectedCollection} onValueChange={setSelectedCollection}>
-                <SelectTrigger id="collection-select">
-                  <SelectValue placeholder="Select a collection" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">No Collection</SelectItem>
-                  {collections.map((collection) => (
-                    <SelectItem key={collection.id} value={collection.id}>
-                      <div className="flex items-center gap-2">
-                        <div className={`w-3 h-3 rounded-full ${collection.color}`} />
-                        {collection.name}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          
-          <Button 
-            onClick={generateStory} 
-            disabled={isGenerating || !prompt.trim()}
-            className="w-full gap-2"
-          >
-            {isGenerating ? (
-              <>
-                <Sparkles className="w-4 h-4 animate-spin" />
-                Generating Story...
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-4 h-4" />
-                Generate Story
-              </>
-            )}
-          </Button>
-        </CardContent>
-      </Card>
+                <div className="space-y-2">
+                  <Label htmlFor="collection-select" className="text-sm font-medium flex items-center gap-2">
+                    <FolderOpen className="w-4 h-4" />
+                    Collection (Optional)
+                  </Label>
+                  <Select value={selectedCollection} onValueChange={setSelectedCollection}>
+                    <SelectTrigger id="collection-select">
+                      <SelectValue placeholder="Select a collection" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">No Collection</SelectItem>
+                      {collections.map((collection) => (
+                        <SelectItem key={collection.id} value={collection.id}>
+                          <div className="flex items-center gap-2">
+                            <div className={`w-3 h-3 rounded-full ${collection.color}`} />
+                            {collection.name}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <Button 
+                onClick={generateStory} 
+                disabled={isGenerating || !prompt.trim()}
+                className="w-full gap-2"
+              >
+                {isGenerating ? (
+                  <>
+                    <Sparkles className="w-4 h-4 animate-spin" />
+                    Generating Story...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    Generate Story
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
 
-      {/* Context hints */}
-      {(context.themes.length > 0 || Object.keys(context.characters).length > 0) && (
-        <Card>
-          <CardContent className="pt-6">
-            <h3 className="text-sm font-medium mb-3 text-muted-foreground">Story Context</h3>
-            <div className="flex flex-wrap gap-2">
-              {context.themes.slice(0, 5).map(theme => (
-                <Badge key={theme} variant="secondary" className="text-xs">
-                  {theme}
-                </Badge>
-              ))}
-              {Object.keys(context.characters).slice(0, 3).map(char => (
-                <Badge key={char} variant="outline" className="text-xs">
-                  {char}
-                </Badge>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Generated story display */}
-      {generatedStory && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-start justify-between">
-              <div>
-                <CardTitle className="text-xl">{generatedStory.title}</CardTitle>
-                <div className="flex items-center gap-2 mt-2">
-                  <Badge variant="secondary">
-                    {generatedStory.language === 'ar' ? 'العربية' : 'English'}
-                  </Badge>
-                  {generatedStory.themes?.map(theme => (
-                    <Badge key={theme} variant="outline" className="text-xs">
+          {/* Context hints */}
+          {(context.themes.length > 0 || Object.keys(context.characters).length > 0) && (
+            <Card>
+              <CardContent className="pt-6">
+                <h3 className="text-sm font-medium mb-3 text-muted-foreground">Story Context</h3>
+                <div className="flex flex-wrap gap-2">
+                  {context.themes.slice(0, 5).map(theme => (
+                    <Badge key={theme} variant="secondary" className="text-xs">
                       {theme}
                     </Badge>
                   ))}
+                  {Object.keys(context.characters).slice(0, 3).map(char => (
+                    <Badge key={char} variant="outline" className="text-xs">
+                      {char}
+                    </Badge>
+                  ))}
                 </div>
-              </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Generated story display */}
+          {generatedStory && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <CardTitle className="text-xl">{generatedStory.title}</CardTitle>
+                    <div className="flex items-center gap-2 mt-2">
+                      <Badge variant="secondary">
+                        {generatedStory.language === 'ar' ? 'العربية' : 'English'}
+                      </Badge>
+                      {generatedStory.themes?.map(theme => (
+                        <Badge key={theme} variant="outline" className="text-xs">
+                          {theme}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div 
+                  className="story-text whitespace-pre-wrap text-foreground"
+                  dir={generatedStory.language === 'ar' ? 'rtl' : 'ltr'}
+                >
+                  {generatedStory.content}
+                </div>
+                
+                <div className="flex gap-2 pt-4 border-t">
+                  <Button onClick={saveStory} className="gap-2">
+                    <BookOpen className="w-4 h-4" />
+                    Save Story
+                  </Button>
+                  <Button variant="outline" onClick={generateNewStory}>
+                    Generate Another
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        {/* Smart Recommendations Sidebar */}
+        {generatedStory && showRecommendations && (
+          <div className="lg:col-span-4">
+            <div className="sticky top-6">
+              <SmartRecommendations
+                currentStory={generatedStory}
+                stories={recentStories}
+                collections={collections}
+                categories={categories}
+                onCreateCollection={onCreateCollection}
+                onAddToCollection={onAddToCollection}
+                onViewStories={() => {}} // Not applicable in generator view
+              />
             </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div 
-              className="story-text whitespace-pre-wrap text-foreground"
-              dir={generatedStory.language === 'ar' ? 'rtl' : 'ltr'}
-            >
-              {generatedStory.content}
-            </div>
-            
-            <div className="flex gap-2 pt-4 border-t">
-              <Button onClick={saveStory} className="gap-2">
-                <BookOpen className="w-4 h-4" />
-                Save Story
-              </Button>
-              <Button variant="outline" onClick={generateNewStory}>
-                Generate Another
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

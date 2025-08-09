@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { BookOpen, Trash, Eye, Play, MagnifyingGlass, Calendar, FolderOpen, Tag } from '@phosphor-icons/react'
 import { Story, Collection, Category } from '../App'
+import { SmartRecommendations } from './SmartRecommendations'
 
 interface StoryHistoryProps {
   stories: Story[]
@@ -20,6 +21,7 @@ interface StoryHistoryProps {
   onAddToCollection: (storyId: string, collectionId: string) => void
   onRemoveFromCollection: (storyId: string) => void
   onUpdateCategory: (storyId: string, categoryId: string) => void
+  onCreateCollection: (name: string, description: string, color: string) => Collection
 }
 
 export function StoryHistory({ 
@@ -32,12 +34,20 @@ export function StoryHistory({
   onContinueStory,
   onAddToCollection,
   onRemoveFromCollection,
-  onUpdateCategory
+  onUpdateCategory,
+  onCreateCollection
 }: StoryHistoryProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedLanguage, setSelectedLanguage] = useState<'all' | 'ar' | 'en'>('all')
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all')
   const [selectedCollectionFilter, setSelectedCollectionFilter] = useState<string>('all')
+  const [highlightedStories, setHighlightedStories] = useState<Story[]>([])
+
+  const handleViewSimilarStories = (stories: Story[]) => {
+    setHighlightedStories(stories)
+    // Clear highlights after a few seconds
+    setTimeout(() => setHighlightedStories([]), 5000)
+  }
 
   const filteredStories = stories.filter(story => {
     const matchesSearch = !searchQuery || 
@@ -194,209 +204,248 @@ export function StoryHistory({
           
           <div className="mt-4 text-sm text-muted-foreground">
             {filteredStories.length} of {stories.length} stories
+            {highlightedStories.length > 0 && (
+              <span className="ml-2 text-primary">
+                • {highlightedStories.length} similar stories highlighted
+              </span>
+            )}
           </div>
         </CardContent>
       </Card>
 
-      {/* Stories Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {filteredStories.map((story) => (
-          <Card key={story.id} className="group hover:shadow-md transition-shadow">
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between">
-                <CardTitle className="text-lg line-clamp-2 group-hover:text-primary transition-colors">
-                  {story.title}
-                </CardTitle>
-                <Badge variant="secondary" className="shrink-0 ml-2">
-                  {story.language === 'ar' ? 'ع' : 'EN'}
-                </Badge>
-              </div>
-              
-              <div className="space-y-2">
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <Calendar className="w-3 h-3" />
-                  {formatDate(story.createdAt)}
-                </div>
-                
-                <div className="flex flex-wrap gap-2">
-                  {story.categoryId && (
-                    <Badge variant="outline" className="text-xs">
-                      <div className="flex items-center gap-1">
-                        <div className={`w-2 h-2 rounded-full ${getCategoryColor(story.categoryId)}`} />
-                        {getCategoryName(story.categoryId)}
-                      </div>
-                    </Badge>
-                  )}
-                  
-                  {story.collectionId && (
-                    <Badge variant="outline" className="text-xs">
-                      <div className="flex items-center gap-1">
-                        <FolderOpen className="w-3 h-3" />
-                        {getCollectionName(story.collectionId)}
-                      </div>
-                    </Badge>
-                  )}
-                </div>
-              </div>
-            </CardHeader>
-            
-            <CardContent className="space-y-3">
-              <p 
-                className="text-sm text-muted-foreground line-clamp-3"
-                dir={story.language === 'ar' ? 'rtl' : 'ltr'}
-              >
-                {getStoryPreview(story.content)}
-              </p>
-              
-              {story.themes && story.themes.length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  {story.themes.slice(0, 3).map(theme => (
-                    <Badge key={theme} variant="outline" className="text-xs">
-                      {theme}
-                    </Badge>
-                  ))}
-                  {story.themes.length > 3 && (
-                    <Badge variant="outline" className="text-xs">
-                      +{story.themes.length - 3}
-                    </Badge>
-                  )}
-                </div>
-              )}
-              
-              <div className="flex gap-2 pt-2">
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button size="sm" variant="outline" className="flex-1 gap-1">
-                      <Eye className="w-3 h-3" />
-                      Read
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-2xl max-h-[80vh]">
-                    <DialogHeader>
-                      <DialogTitle className="text-xl">{story.title}</DialogTitle>
-                      <div className="flex items-center gap-2 mt-2">
-                        <Badge variant="secondary">
-                          {story.language === 'ar' ? 'العربية' : 'English'}
-                        </Badge>
-                        <span className="text-sm text-muted-foreground">
-                          {formatDate(story.createdAt)}
-                        </span>
+      {/* Main Content Layout */}
+      <div className="grid gap-6 lg:grid-cols-12">
+        {/* Stories Grid */}
+        <div className={`space-y-4 ${selectedStory ? 'lg:col-span-8' : 'lg:col-span-12'}`}>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {filteredStories.map((story) => {
+              const isHighlighted = highlightedStories.some(h => h.id === story.id)
+              return (
+                <Card 
+                  key={story.id} 
+                  className={`group hover:shadow-md transition-all cursor-pointer ${
+                    isHighlighted ? 'ring-2 ring-primary/50 bg-primary/5' : ''
+                  } ${selectedStory?.id === story.id ? 'ring-2 ring-primary' : ''}`}
+                  onClick={() => onSelectStory(story)}
+                >
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <CardTitle className="text-lg line-clamp-2 group-hover:text-primary transition-colors">
+                        {story.title}
+                      </CardTitle>
+                      <Badge variant="secondary" className="shrink-0 ml-2">
+                        {story.language === 'ar' ? 'ع' : 'EN'}
+                      </Badge>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Calendar className="w-3 h-3" />
+                        {formatDate(story.createdAt)}
                       </div>
                       
-                      <div className="grid md:grid-cols-2 gap-4 mt-4 p-4 bg-muted/50 rounded-lg">
-                        <div className="space-y-2">
-                          <div className="text-sm font-medium flex items-center gap-2">
-                            <Tag className="w-4 h-4" />
-                            Category
-                          </div>
-                          <Select 
-                            value={story.categoryId || ''} 
-                            onValueChange={(value) => onUpdateCategory(story.id, value)}
-                          >
-                            <SelectTrigger className="h-8">
-                              <SelectValue placeholder="Select category" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="">No Category</SelectItem>
-                              {categories.map((category) => (
-                                <SelectItem key={category.id} value={category.id}>
-                                  <div className="flex items-center gap-2">
-                                    <div className={`w-3 h-3 rounded-full ${category.color}`} />
-                                    {category.name}
-                                  </div>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
+                      <div className="flex flex-wrap gap-2">
+                        {story.categoryId && (
+                          <Badge variant="outline" className="text-xs">
+                            <div className="flex items-center gap-1">
+                              <div className={`w-2 h-2 rounded-full ${getCategoryColor(story.categoryId)}`} />
+                              {getCategoryName(story.categoryId)}
+                            </div>
+                          </Badge>
+                        )}
                         
-                        <div className="space-y-2">
-                          <div className="text-sm font-medium flex items-center gap-2">
-                            <FolderOpen className="w-4 h-4" />
-                            Collection
+                        {story.collectionId && (
+                          <Badge variant="outline" className="text-xs">
+                            <div className="flex items-center gap-1">
+                              <FolderOpen className="w-3 h-3" />
+                              {getCollectionName(story.collectionId)}
+                            </div>
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </CardHeader>
+                  
+                  <CardContent className="space-y-3">
+                    <p 
+                      className="text-sm text-muted-foreground line-clamp-3"
+                      dir={story.language === 'ar' ? 'rtl' : 'ltr'}
+                    >
+                      {getStoryPreview(story.content)}
+                    </p>
+                    
+                    {story.themes && story.themes.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {story.themes.slice(0, 3).map(theme => (
+                          <Badge key={theme} variant="outline" className="text-xs">
+                            {theme}
+                          </Badge>
+                        ))}
+                        {story.themes.length > 3 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{story.themes.length - 3}
+                          </Badge>
+                        )}
+                      </div>
+                    )}
+                    
+                    <div className="flex gap-2 pt-2">
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button size="sm" variant="outline" className="flex-1 gap-1" onClick={(e) => e.stopPropagation()}>
+                            <Eye className="w-3 h-3" />
+                            Read
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-2xl max-h-[80vh]">
+                          <DialogHeader>
+                            <DialogTitle className="text-xl">{story.title}</DialogTitle>
+                            <div className="flex items-center gap-2 mt-2">
+                              <Badge variant="secondary">
+                                {story.language === 'ar' ? 'العربية' : 'English'}
+                              </Badge>
+                              <span className="text-sm text-muted-foreground">
+                                {formatDate(story.createdAt)}
+                              </span>
+                            </div>
+                            
+                            <div className="grid md:grid-cols-2 gap-4 mt-4 p-4 bg-muted/50 rounded-lg">
+                              <div className="space-y-2">
+                                <div className="text-sm font-medium flex items-center gap-2">
+                                  <Tag className="w-4 h-4" />
+                                  Category
+                                </div>
+                                <Select 
+                                  value={story.categoryId || ''} 
+                                  onValueChange={(value) => onUpdateCategory(story.id, value)}
+                                >
+                                  <SelectTrigger className="h-8">
+                                    <SelectValue placeholder="Select category" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="">No Category</SelectItem>
+                                    {categories.map((category) => (
+                                      <SelectItem key={category.id} value={category.id}>
+                                        <div className="flex items-center gap-2">
+                                          <div className={`w-3 h-3 rounded-full ${category.color}`} />
+                                          {category.name}
+                                        </div>
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              
+                              <div className="space-y-2">
+                                <div className="text-sm font-medium flex items-center gap-2">
+                                  <FolderOpen className="w-4 h-4" />
+                                  Collection
+                                </div>
+                                <Select 
+                                  value={story.collectionId || ''} 
+                                  onValueChange={(value) => {
+                                    if (value) {
+                                      onAddToCollection(story.id, value)
+                                    } else {
+                                      onRemoveFromCollection(story.id)
+                                    }
+                                  }}
+                                >
+                                  <SelectTrigger className="h-8">
+                                    <SelectValue placeholder="Select collection" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="">No Collection</SelectItem>
+                                    {collections.map((collection) => (
+                                      <SelectItem key={collection.id} value={collection.id}>
+                                        <div className="flex items-center gap-2">
+                                          <div className={`w-3 h-3 rounded-full ${collection.color}`} />
+                                          {collection.name}
+                                        </div>
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                          </DialogHeader>
+                          
+                          <ScrollArea className="max-h-96 pr-4">
+                            <div 
+                              className="story-text whitespace-pre-wrap"
+                              dir={story.language === 'ar' ? 'rtl' : 'ltr'}
+                            >
+                              {story.content}
+                            </div>
+                          </ScrollArea>
+                          
+                          <div className="flex gap-2 pt-4 border-t">
+                            <Button 
+                              onClick={() => onContinueStory(story)}
+                              className="gap-2"
+                            >
+                              <Play className="w-4 h-4" />
+                              Continue Story
+                            </Button>
+                            <Button 
+                              variant="destructive" 
+                              size="sm"
+                              onClick={() => onDeleteStory(story.id)}
+                              className="gap-1"
+                            >
+                              <Trash className="w-3 h-3" />
+                              Delete
+                            </Button>
                           </div>
-                          <Select 
-                            value={story.collectionId || ''} 
-                            onValueChange={(value) => {
-                              if (value) {
-                                onAddToCollection(story.id, value)
-                              } else {
-                                onRemoveFromCollection(story.id)
-                              }
-                            }}
-                          >
-                            <SelectTrigger className="h-8">
-                              <SelectValue placeholder="Select collection" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="">No Collection</SelectItem>
-                              {collections.map((collection) => (
-                                <SelectItem key={collection.id} value={collection.id}>
-                                  <div className="flex items-center gap-2">
-                                    <div className={`w-3 h-3 rounded-full ${collection.color}`} />
-                                    {collection.name}
-                                  </div>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    </DialogHeader>
-                    
-                    <ScrollArea className="max-h-96 pr-4">
-                      <div 
-                        className="story-text whitespace-pre-wrap"
-                        dir={story.language === 'ar' ? 'rtl' : 'ltr'}
-                      >
-                        {story.content}
-                      </div>
-                    </ScrollArea>
-                    
-                    <div className="flex gap-2 pt-4 border-t">
+                        </DialogContent>
+                      </Dialog>
+                      
                       <Button 
-                        onClick={() => onContinueStory(story)}
-                        className="gap-2"
-                      >
-                        <Play className="w-4 h-4" />
-                        Continue Story
-                      </Button>
-                      <Button 
-                        variant="destructive" 
-                        size="sm"
-                        onClick={() => onDeleteStory(story.id)}
-                        className="gap-1"
+                        size="sm" 
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onDeleteStory(story.id)
+                        }}
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
                       >
                         <Trash className="w-3 h-3" />
-                        Delete
                       </Button>
                     </div>
-                  </DialogContent>
-                </Dialog>
-                
-                <Button 
-                  size="sm" 
-                  variant="ghost"
-                  onClick={() => onDeleteStory(story.id)}
-                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                >
-                  <Trash className="w-3 h-3" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-      
-      {filteredStories.length === 0 && searchQuery && (
-        <div className="text-center py-8">
-          <MagnifyingGlass className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-          <h3 className="font-semibold mb-2">No stories found</h3>
-          <p className="text-muted-foreground">
-            Try adjusting your search terms or language filter
-          </p>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+          
+          {filteredStories.length === 0 && searchQuery && (
+            <div className="text-center py-8">
+              <MagnifyingGlass className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+              <h3 className="font-semibold mb-2">No stories found</h3>
+              <p className="text-muted-foreground">
+                Try adjusting your search terms or language filter
+              </p>
+            </div>
+          )}
         </div>
-      )}
+
+        {/* Smart Recommendations Sidebar */}
+        {selectedStory && (
+          <div className="lg:col-span-4">
+            <div className="sticky top-6">
+              <SmartRecommendations
+                currentStory={selectedStory}
+                stories={stories}
+                collections={collections}
+                categories={categories}
+                onCreateCollection={onCreateCollection}
+                onAddToCollection={onAddToCollection}
+                onViewStories={handleViewSimilarStories}
+              />
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
