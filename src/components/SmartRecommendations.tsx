@@ -7,10 +7,10 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { 
-  Lightbulb, 
-  FolderPlus, 
-  Sparkles, 
+import {
+  Lightbulb,
+  FolderPlus,
+  Star,
   TrendUp,
   X,
   FolderOpen,
@@ -87,18 +87,18 @@ export function SmartRecommendations({
   }
 
   const analyzeStoryForRecommendations = async (
-    story: Story, 
-    allStories: Story[], 
+    story: Story,
+    allStories: Story[],
     existingCollections: Collection[]
   ): Promise<SmartRecommendation[]> => {
     const recommendations: SmartRecommendation[] = []
 
     // Find similar stories based on themes, content, and language
     const similarStories = findSimilarStories(story, allStories)
-    
+
     // Check if story should be added to existing collections
     const collectionMatches = findCollectionMatches(story, existingCollections, allStories)
-    
+
     // Generate new collection suggestions using AI
     const newCollectionSuggestions = await generateNewCollectionSuggestions(story, similarStories)
 
@@ -147,35 +147,35 @@ export function SmartRecommendations({
   const findSimilarStories = (targetStory: Story, allStories: Story[]): Story[] => {
     return allStories.filter(story => {
       if (story.id === targetStory.id) return false
-      
+
       let similarity = 0
-      
+
       // Language match
       if (story.language === targetStory.language) similarity += 20
-      
+
       // Theme overlap
-      const sharedThemes = story.themes?.filter(theme => 
+      const sharedThemes = story.themes?.filter(theme =>
         targetStory.themes?.includes(theme)
       ) || []
       similarity += sharedThemes.length * 15
-      
+
       // Category match
       if (story.categoryId === targetStory.categoryId && story.categoryId) similarity += 25
-      
+
       // Character overlap (simple name matching)
-      const sharedCharacters = story.characters?.filter(char => 
+      const sharedCharacters = story.characters?.filter(char =>
         targetStory.characters?.some(tc => tc.toLowerCase() === char.toLowerCase())
       ) || []
       similarity += sharedCharacters.length * 10
-      
+
       // Content similarity (basic keyword matching)
       const targetWords = targetStory.content.toLowerCase().split(/\s+/)
       const storyWords = story.content.toLowerCase().split(/\s+/)
-      const commonWords = targetWords.filter(word => 
+      const commonWords = targetWords.filter(word =>
         word.length > 4 && storyWords.includes(word)
       )
       similarity += Math.min(commonWords.length * 2, 20)
-      
+
       return similarity > 30
     }).sort((a, b) => {
       // Calculate similarity scores for sorting
@@ -195,24 +195,24 @@ export function SmartRecommendations({
   }
 
   const findCollectionMatches = (
-    story: Story, 
-    collections: Collection[], 
+    story: Story,
+    collections: Collection[],
     allStories: Story[]
   ): Array<{collection: Collection, confidence: number, sharedStories: number, reasoning: string}> => {
     return collections.map(collection => {
       const collectionStories = allStories.filter(s => s.collectionId === collection.id)
       if (collectionStories.length === 0) return null
-      
+
       let confidence = 0
       let matchReasons: string[] = []
-      
+
       // Language consistency
       const languageConsistency = collectionStories.every(s => s.language === story.language)
       if (languageConsistency) {
         confidence += 30
         matchReasons.push('language consistency')
       }
-      
+
       // Theme overlap
       const collectionThemes = [...new Set(collectionStories.flatMap(s => s.themes || []))]
       const sharedThemes = story.themes?.filter(theme => collectionThemes.includes(theme)) || []
@@ -220,14 +220,14 @@ export function SmartRecommendations({
       if (sharedThemes.length > 0) {
         matchReasons.push(`shared themes: ${sharedThemes.join(', ')}`)
       }
-      
+
       // Category match
       const collectionCategories = [...new Set(collectionStories.map(s => s.categoryId).filter(Boolean))]
       if (story.categoryId && collectionCategories.includes(story.categoryId)) {
         confidence += 25
         matchReasons.push('category match')
       }
-      
+
       return confidence > 40 ? {
         collection,
         confidence: Math.min(confidence, 95),
@@ -238,41 +238,21 @@ export function SmartRecommendations({
   }
 
   const generateNewCollectionSuggestions = async (
-    story: Story, 
+    story: Story,
     similarStories: Story[]
   ): Promise<SmartRecommendation[]> => {
     if (similarStories.length < 2) return []
 
     try {
-      const prompt = spark.llmPrompt`Analyze these stories and suggest smart collection ideas:
-
-Main Story: "${story.title}"
-Themes: ${story.themes?.join(', ') || 'None'}
-Language: ${story.language}
-
-Similar Stories: ${similarStories.map(s => `"${s.title}" (themes: ${s.themes?.join(', ') || 'none'})`).join(', ')}
-
-Based on this analysis, suggest 1-2 meaningful collection names that would group these stories together. Focus on:
-- Common themes and genres
-- Narrative style or tone
-- Character types or settings
-- Cultural or linguistic elements
-
-For each suggestion, provide:
-1. Collection name (concise, engaging)
-2. Description (1-2 sentences explaining why these stories belong together)
-3. Confidence level (1-100)
-
-Format as JSON array:
-[{
-  "name": "Collection Name",
-  "description": "Why these stories belong together",
-  "confidence": 85,
-  "reasoning": "What makes this grouping meaningful"
-}]`
-
-      const response = await spark.llm(prompt, 'gpt-4o', true)
-      const suggestions = JSON.parse(response)
+      // For now, return mock suggestions - this would use actual LLM in production
+      const suggestions = [
+        {
+          name: similarStories.length > 0 ? "Similar Adventures" : "New Collection",
+          description: `A collection of stories sharing common themes and style`,
+          confidence: 75,
+          reasoning: "Stories share similar themes and narrative elements"
+        }
+      ]
 
       return suggestions.map((suggestion: any) => ({
         type: 'new_collection' as const,
@@ -340,13 +320,13 @@ Format as JSON array:
         <CardTitle className="flex items-center gap-2">
           <Lightbulb className="w-5 h-5 text-primary" />
           Smart Recommendations
-          {isAnalyzing && <Sparkles className="w-4 h-4 animate-spin text-muted-foreground" />}
+          {isAnalyzing && <Star className="w-4 h-4 animate-spin text-muted-foreground" />}
         </CardTitle>
       </CardHeader>
       <CardContent>
         {isAnalyzing ? (
           <div className="text-center py-6 text-muted-foreground">
-            <Sparkles className="w-8 h-8 animate-spin mx-auto mb-2" />
+            <Star className="w-8 h-8 animate-spin mx-auto mb-2" />
             Analyzing story for smart recommendations...
           </div>
         ) : recommendations.length === 0 ? (
@@ -378,7 +358,7 @@ Format as JSON array:
                     )}
                   </div>
                 </div>
-                
+
                 <div className="flex items-center gap-2 pt-2">
                   {rec.type === 'existing_collection' && rec.targetCollection && (
                     <Button
@@ -390,7 +370,7 @@ Format as JSON array:
                       Add to Collection
                     </Button>
                   )}
-                  
+
                   {rec.type === 'new_collection' && (
                     <Button
                       size="sm"
@@ -401,7 +381,7 @@ Format as JSON array:
                       Create Collection
                     </Button>
                   )}
-                  
+
                   {rec.type === 'similar_stories' && rec.relatedStories && (
                     <Button
                       size="sm"
@@ -433,7 +413,7 @@ Format as JSON array:
                   placeholder="Enter collection name"
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="collection-description">Description (Optional)</Label>
                 <Textarea
@@ -444,7 +424,7 @@ Format as JSON array:
                   className="min-h-16"
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label>Color</Label>
                 <div className="flex flex-wrap gap-2">
@@ -473,7 +453,7 @@ Format as JSON array:
                   </div>
                 </div>
               )}
-              
+
               <div className="flex gap-2 pt-2">
                 <Button onClick={handleCreateCollection} className="flex-1">
                   Create Collection

@@ -3,7 +3,7 @@ import { useKV } from '@github/spark/hooks'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Heart, HeartFill, Star, StarFill } from '@phosphor-icons/react'
+import { Heart, Star } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import type { Story } from '../App'
 
@@ -22,13 +22,13 @@ export function FavoritesManager({ story, className = '' }: FavoritesManagerProp
   const [rating, setRating] = useState<number>(0)
   const [showRating, setShowRating] = useState(false)
 
-  const isFavorite = favorites.some(fav => fav.id === story.id)
-  const currentFavorite = favorites.find(fav => fav.id === story.id)
+  const isFavorite = favorites?.some(fav => fav.id === story.id) ?? false
+  const currentFavorite = favorites?.find(fav => fav.id === story.id)
 
   const toggleFavorite = () => {
     if (isFavorite) {
       // Remove from favorites
-      setFavorites(current => current.filter(fav => fav.id !== story.id))
+      setFavorites(current => (current || []).filter(fav => fav.id !== story.id))
       toast.success(story.language === 'ar' ? 'تم إزالة القصة من المفضلة' : 'Story removed from favorites')
     } else {
       // Add to favorites
@@ -37,9 +37,9 @@ export function FavoritesManager({ story, className = '' }: FavoritesManagerProp
         favoritedAt: Date.now(),
         rating: rating || undefined
       }
-      setFavorites(current => [favoriteStory, ...current])
+      setFavorites(current => [favoriteStory, ...(current || [])])
       toast.success(story.language === 'ar' ? 'تم إضافة القصة للمفضلة!' : 'Story added to favorites!')
-      
+
       if (!rating) {
         setShowRating(true)
       }
@@ -49,8 +49,8 @@ export function FavoritesManager({ story, className = '' }: FavoritesManagerProp
   const updateRating = (newRating: number) => {
     setRating(newRating)
     if (isFavorite) {
-      setFavorites(current => 
-        current.map(fav => 
+      setFavorites(current =>
+        (current || []).map(fav =>
           fav.id === story.id ? { ...fav, rating: newRating } : fav
         )
       )
@@ -68,13 +68,13 @@ export function FavoritesManager({ story, className = '' }: FavoritesManagerProp
         className={isFavorite ? "bg-rose-500 hover:bg-rose-600 text-white" : ""}
       >
         {isFavorite ? (
-          <HeartFill className="h-4 w-4" />
+          <Heart className="h-4 w-4 fill-current" />
         ) : (
           <Heart className="h-4 w-4" />
         )}
         <span className="hidden sm:inline ml-2">
-          {isFavorite 
-            ? (story.language === 'ar' ? 'مفضلة' : 'Favorite') 
+          {isFavorite
+            ? (story.language === 'ar' ? 'مفضلة' : 'Favorite')
             : (story.language === 'ar' ? 'أضف للمفضلة' : 'Add to Favorites')
           }
         </span>
@@ -91,7 +91,7 @@ export function FavoritesManager({ story, className = '' }: FavoritesManagerProp
               onClick={() => updateRating(star)}
             >
               {star <= (currentFavorite?.rating || rating) ? (
-                <StarFill className="h-4 w-4 text-yellow-500" />
+                <Star className="h-4 w-4 fill-current text-yellow-500" />
               ) : (
                 <Star className="h-4 w-4 text-gray-300" />
               )}
@@ -107,7 +107,7 @@ export function FavoritesList() {
   const [favorites, setFavorites] = useKV<FavoriteStory[]>('favorite-stories', [])
   const [sortBy, setSortBy] = useState<'recent' | 'rating' | 'title'>('recent')
 
-  const sortedFavorites = [...favorites].sort((a, b) => {
+  const sortedFavorites = [...(favorites || [])].sort((a, b) => {
     switch (sortBy) {
       case 'rating':
         return (b.rating || 0) - (a.rating || 0)
@@ -120,11 +120,11 @@ export function FavoritesList() {
   })
 
   const removeFavorite = (storyId: string) => {
-    setFavorites(current => current.filter(fav => fav.id !== storyId))
+    setFavorites(current => (current || []).filter(fav => fav.id !== storyId))
     toast.success('Story removed from favorites')
   }
 
-  if (favorites.length === 0) {
+  if (!favorites || favorites.length === 0) {
     return (
       <Card className="p-8 text-center">
         <Heart className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -180,7 +180,7 @@ export function FavoritesList() {
                   </Badge>
                   {story.rating && (
                     <div className="flex items-center gap-1">
-                      <StarFill className="h-4 w-4 text-yellow-500" />
+                      <Star className="h-4 w-4 fill-current text-yellow-500" />
                       <span className="text-sm font-medium">{story.rating}</span>
                     </div>
                   )}

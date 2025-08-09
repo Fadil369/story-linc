@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
-import { Sparkles, Template, Calendar, Wand, ArrowRight, Shuffle, Lightbulb } from '@phosphor-icons/react'
+import { Star, MagicWand, Calendar, Shuffle, ArrowRight, Lightbulb, CaretDown } from '@phosphor-icons/react'
 import { storyTemplates, storyOccasions, getTemplateById, type StoryTemplate, type StoryOccasion } from '../data/storyTemplates'
 import { PromptSuggestions } from './PromptSuggestions'
 
@@ -37,9 +37,9 @@ export function StoryTemplates({ language, onTemplateSelect, onPromptGenerate }:
   const generateRandomPrompt = (template: StoryTemplate) => {
     const prompts = template.prompts[language]
     const randomPrompt = prompts[Math.floor(Math.random() * prompts.length)]
-    
+
     let filledPrompt = randomPrompt
-    
+
     // Replace placeholders with custom values or random suggestions
     template.placeholders[language].forEach(placeholder => {
       const customValue = customValues[placeholder]
@@ -51,7 +51,7 @@ export function StoryTemplates({ language, onTemplateSelect, onPromptGenerate }:
         filledPrompt = filledPrompt.replace(`{${placeholder}}`, suggestion)
       }
     })
-    
+
     return filledPrompt
   }
 
@@ -83,7 +83,7 @@ export function StoryTemplates({ language, onTemplateSelect, onPromptGenerate }:
   const handleUseTemplate = (template: StoryTemplate) => {
     setSelectedTemplate(template)
     setIsCustomizing(true)
-    
+
     // Initialize custom values
     const initialValues: Record<string, string> = {}
     template.placeholders[language].forEach(placeholder => {
@@ -94,7 +94,7 @@ export function StoryTemplates({ language, onTemplateSelect, onPromptGenerate }:
 
   const handleGenerateFromTemplate = () => {
     if (!selectedTemplate) return
-    
+
     const prompt = generateRandomPrompt(selectedTemplate)
     onTemplateSelect(prompt, selectedTemplate)
     setIsCustomizing(false)
@@ -113,7 +113,7 @@ export function StoryTemplates({ language, onTemplateSelect, onPromptGenerate }:
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-2">
             <div className={`w-8 h-8 rounded-lg ${template.color} flex items-center justify-center text-white text-sm`}>
-              <Sparkles size={16} />
+              <Star size={16} />
             </div>
             <div>
               <CardTitle className="text-sm font-medium">
@@ -125,7 +125,7 @@ export function StoryTemplates({ language, onTemplateSelect, onPromptGenerate }:
             </div>
           </div>
         </div>
-        
+
         <div className="flex flex-wrap gap-1 mt-2">
           {template.themes.slice(0, 3).map(theme => (
             <Badge key={theme} variant="secondary" className="text-xs">
@@ -134,7 +134,7 @@ export function StoryTemplates({ language, onTemplateSelect, onPromptGenerate }:
           ))}
         </div>
       </CardHeader>
-      
+
       <CardContent className="pt-0">
         <div className="flex gap-2">
           <Button
@@ -151,7 +151,7 @@ export function StoryTemplates({ language, onTemplateSelect, onPromptGenerate }:
             onClick={() => handleUseTemplate(template)}
             className="flex-1"
           >
-            <Wand size={14} className="mr-1" />
+            <MagicWand size={14} className="mr-1" />
             {language === 'ar' ? 'تخصيص' : 'Customize'}
           </Button>
         </div>
@@ -176,13 +176,13 @@ export function StoryTemplates({ language, onTemplateSelect, onPromptGenerate }:
           </div>
         </div>
       </CardHeader>
-      
+
       <CardContent>
         <div className="space-y-2">
           {occasion.templates.slice(0, 3).map(templateId => {
             const template = getTemplateById(templateId)
             if (!template) return null
-            
+
             return (
               <Button
                 key={templateId}
@@ -211,7 +211,7 @@ export function StoryTemplates({ language, onTemplateSelect, onPromptGenerate }:
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2">
-        <Template size={20} className="text-primary" />
+        <Lightbulb size={20} className="text-primary" />
         <h3 className="text-lg font-semibold">
           {language === 'ar' ? 'قوالب القصص' : 'Story Templates'}
         </h3>
@@ -275,7 +275,7 @@ export function StoryTemplates({ language, onTemplateSelect, onPromptGenerate }:
               {language === 'ar' ? 'تخصيص القالب' : 'Customize Template'}
             </DialogTitle>
           </DialogHeader>
-          
+
           {selectedTemplate && (
             <div className="space-y-4">
               <div className="space-y-2">
@@ -291,7 +291,7 @@ export function StoryTemplates({ language, onTemplateSelect, onPromptGenerate }:
                 <Label className="text-sm font-medium">
                   {language === 'ar' ? 'تخصيص العناصر:' : 'Customize Elements:'}
                 </Label>
-                
+
                 {selectedTemplate.placeholders[language].map(placeholder => (
                   <div key={placeholder} className="space-y-1">
                     <Label htmlFor={placeholder} className="text-xs text-muted-foreground">
@@ -323,7 +323,7 @@ export function StoryTemplates({ language, onTemplateSelect, onPromptGenerate }:
                   onClick={handleGenerateFromTemplate}
                   className="flex-1"
                 >
-                  <Sparkles size={14} className="mr-1" />
+                  <Star size={14} className="mr-1" />
                   {language === 'ar' ? 'توليد' : 'Generate'}
                 </Button>
               </div>

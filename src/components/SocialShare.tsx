@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Share, Copy, Twitter, Facebook, MessageCircle, Mail, Link2, Heart, Download } from '@phosphor-icons/react'
+import { Share, Copy, Heart, Download, EnvelopeSimple, Link, ChatCircle } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import type { Story } from '../App'
 
@@ -21,19 +21,19 @@ export function SocialShare({ story, className = '' }: SocialShareProps) {
 
   // Generate story excerpt (first 150 characters)
   const storyExcerpt = story.content.slice(0, 150) + (story.content.length > 150 ? '...' : '')
-  
+
   // Create shareable URL (this would be the actual URL in production)
   const storyUrl = `${window.location.origin}/story/${story.id}`
-  
+
   // Generate share text
   const generateShareText = (platform: string) => {
-    const baseText = customMessage || (story.language === 'ar' 
+    const baseText = customMessage || (story.language === 'ar'
       ? `شاهد هذه القصة الرائعة: "${story.title}"`
       : `Check out this amazing story: "${story.title}"`)
-    
+
     const excerpt = includeExcerpt ? `\n\n${storyExcerpt}` : ''
     const hashtags = platform === 'twitter' ? '\n\n#StoryWeaver #CreativeWriting #AI' : ''
-    
+
     return `${baseText}${excerpt}${hashtags}\n\n${storyUrl}`
   }
 
@@ -62,7 +62,7 @@ export function SocialShare({ story, className = '' }: SocialShareProps) {
   }
 
   const shareViaEmail = () => {
-    const subject = encodeURIComponent(story.language === 'ar' 
+    const subject = encodeURIComponent(story.language === 'ar'
       ? `قصة رائعة: ${story.title}`
       : `Amazing Story: ${story.title}`)
     const body = encodeURIComponent(generateShareText('email'))
@@ -93,7 +93,7 @@ export function SocialShare({ story, className = '' }: SocialShareProps) {
           </span>
         </Button>
       </DialogTrigger>
-      
+
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -101,7 +101,7 @@ export function SocialShare({ story, className = '' }: SocialShareProps) {
             {story.language === 'ar' ? 'شارك القصة' : 'Share Story'}
           </DialogTitle>
         </DialogHeader>
-        
+
         <div className="space-y-4">
           {/* Custom Message */}
           <div className="space-y-2">
@@ -110,7 +110,7 @@ export function SocialShare({ story, className = '' }: SocialShareProps) {
             </Label>
             <Textarea
               id="custom-message"
-              placeholder={story.language === 'ar' 
+              placeholder={story.language === 'ar'
                 ? 'أضف رسالتك الخاصة...'
                 : 'Add your own message...'}
               value={customMessage}
@@ -135,35 +135,35 @@ export function SocialShare({ story, className = '' }: SocialShareProps) {
 
           {/* Share Buttons Grid */}
           <div className="grid grid-cols-2 gap-3">
-            <Button 
+            <Button
               onClick={shareViaTwitter}
               className="bg-sky-500 hover:bg-sky-600 text-white"
             >
-              <Twitter className="h-4 w-4 mr-2" />
+              <Share className="h-4 w-4 mr-2" />
               Twitter
             </Button>
-            
-            <Button 
+
+            <Button
               onClick={shareViaFacebook}
               className="bg-blue-600 hover:bg-blue-700 text-white"
             >
-              <Facebook className="h-4 w-4 mr-2" />
+              <Share className="h-4 w-4 mr-2" />
               Facebook
             </Button>
-            
-            <Button 
+
+            <Button
               onClick={shareViaWhatsApp}
               className="bg-green-500 hover:bg-green-600 text-white"
             >
-              <MessageCircle className="h-4 w-4 mr-2" />
+              <ChatCircle className="h-4 w-4 mr-2" />
               WhatsApp
             </Button>
-            
-            <Button 
+
+            <Button
               onClick={shareViaEmail}
               variant="outline"
             >
-              <Mail className="h-4 w-4 mr-2" />
+              <EnvelopeSimple className="h-4 w-4 mr-2" />
               Email
             </Button>
           </div>
@@ -171,14 +171,14 @@ export function SocialShare({ story, className = '' }: SocialShareProps) {
           {/* Copy Link */}
           <Card className="p-3">
             <div className="flex items-center gap-2">
-              <Link2 className="h-4 w-4 text-muted-foreground" />
-              <Input 
-                value={storyUrl} 
-                readOnly 
+              <Link className="h-4 w-4 text-muted-foreground" />
+              <Input
+                value={storyUrl}
+                readOnly
                 className="text-xs"
               />
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 variant="outline"
                 onClick={() => copyToClipboard(storyUrl)}
               >
@@ -188,8 +188,8 @@ export function SocialShare({ story, className = '' }: SocialShareProps) {
           </Card>
 
           {/* Copy Full Text */}
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             className="w-full"
             onClick={() => copyToClipboard(generateShareText('copy'))}
           >
@@ -198,8 +198,8 @@ export function SocialShare({ story, className = '' }: SocialShareProps) {
           </Button>
 
           {/* Download Story */}
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             className="w-full"
             onClick={downloadStory}
           >
