@@ -5,9 +5,26 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
-import { Sparkles, Wand, Languages, FolderOpen, Tag, BookOpen } from '@phosphor-icons/react'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import { 
+  Lightbulb, 
+  FolderPlus, 
+  Star, 
+  TrendingUp,
+  X,
+  FolderOpen,
+  Plus,
+  BookOpen,
+  MagicWand,
+  Globe,
+  Files,
+  Tag,
+  ChevronDown
+} from '@phosphor-icons/react'
 import { Story, StoryContext, Collection, Category } from '../App'
 import { SmartRecommendations } from './SmartRecommendations'
+import { StoryTemplates } from './StoryTemplates'
+import { type StoryTemplate } from '../data/storyTemplates'
 import { toast } from 'sonner'
 
 interface StoryGeneratorProps {
@@ -35,6 +52,8 @@ export function StoryGenerator({
   const [selectedCollection, setSelectedCollection] = useState<string>('')
   const [selectedCategory, setSelectedCategory] = useState<string>('')
   const [showRecommendations, setShowRecommendations] = useState(false)
+  const [showTemplates, setShowTemplates] = useState(false)
+  const [selectedTemplate, setSelectedTemplate] = useState<StoryTemplate | null>(null)
 
   const detectLanguage = (text: string): 'ar' | 'en' => {
     const arabicRegex = /[\u0600-\u06FF]/
@@ -53,7 +72,7 @@ export function StoryGenerator({
       const isArabic = language === 'ar'
       
       // Build context for the AI
-      const contextPrompt = buildContextPrompt(prompt, language, context, recentStories)
+      const contextPrompt = buildContextPrompt(prompt, language, context, recentStories, selectedTemplate)
       
       const storyPrompt = spark.llmPrompt`${contextPrompt}`
       const generatedContent = await spark.llm(storyPrompt, 'gpt-4o')
@@ -73,7 +92,12 @@ export function StoryGenerator({
         characters: extractCharacters(content),
         themes: extractThemes(content, language),
         collectionId: selectedCollection || undefined,
-        categoryId: selectedCategory || undefined
+        categoryId: selectedCategory || selectedTemplate?.category || undefined
+      }
+      
+      // Add template themes if available
+      if (selectedTemplate) {
+        newStory.themes = [...new Set([...(newStory.themes || []), ...selectedTemplate.themes])]
       }
       
       setGeneratedStory(newStory)
@@ -86,7 +110,7 @@ export function StoryGenerator({
     }
   }
 
-  const buildContextPrompt = (userPrompt: string, language: 'ar' | 'en', context: StoryContext, recentStories: Story[]) => {
+  const buildContextPrompt = (userPrompt: string, language: 'ar' | 'en', context: StoryContext, recentStories: Story[], template?: StoryTemplate) => {
     const isArabic = language === 'ar'
     
     let contextString = ''
@@ -106,6 +130,23 @@ export function StoryGenerator({
         : `Previous themes: ${context.themes.slice(0, 5).join(', ')}\n`
     }
     
+    // Add template context if available
+    if (template) {
+      contextString += isArabic
+        ? `نوع القصة: ${template.nameAr} - ${template.descriptionAr}\n`
+        : `Story Type: ${template.name} - ${template.description}\n`
+      
+      contextString += isArabic
+        ? `المزاج المطلوب: ${template.mood}\n`
+        : `Desired Mood: ${template.mood}\n`
+      
+      if (template.themes.length > 0) {
+        contextString += isArabic
+          ? `الثيمات المقترحة: ${template.themes.join(', ')}\n`
+          : `Suggested Themes: ${template.themes.join(', ')}\n`
+      }
+    }
+    
     const basePrompt = isArabic
       ? `أنت راوي قصص ذكي ومبدع. اكتب قصة جميلة ومثيرة باللغة العربية بناءً على الطلب التالي.
 
@@ -119,6 +160,7 @@ ${contextString}
 - اجعل القصة بطول مناسب (300-800 كلمة)
 - ابدأ بعنوان جذاب
 - استخدم أسلوباً أدبياً جميلاً
+${template ? `- اتبع أسلوب ${template.nameAr} والمزاج ${template.mood}` : ''}
 
 العنوان: [عنوان القصة]
 [محتوى القصة]`
@@ -134,6 +176,7 @@ Instructions:
 - Make the story an appropriate length (300-800 words)
 - Start with an engaging title
 - Use beautiful literary style
+${template ? `- Follow the ${template.name} style and ${template.mood} mood` : ''}
 
 Title: [Story Title]
 [Story Content]`
@@ -186,6 +229,7 @@ Title: [Story Title]
       setGeneratedStory(null)
       setPrompt('')
       setShowRecommendations(false)
+      setSelectedTemplate(null)
     }
   }
 
@@ -194,15 +238,57 @@ Title: [Story Title]
     setShowRecommendations(false)
   }
 
+  const handleTemplateSelect = (templatePrompt: string, template: StoryTemplate) => {
+    setPrompt(templatePrompt)
+    setSelectedTemplate(template)
+    setSelectedCategory(template.category)
+    setShowTemplates(false)
+    
+    const language = detectLanguage(templatePrompt)
+    toast.success(
+      language === 'ar' 
+        ? `تم تطبيق قالب: ${template.nameAr}` 
+        : `Applied template: ${template.name}`
+    )
+  }
+
   return (
     <div className="space-y-6">
       <div className={`grid gap-6 ${generatedStory && showRecommendations ? 'lg:grid-cols-12' : ''}`}>
         {/* Main Story Generation Section */}
         <div className={`space-y-6 ${generatedStory && showRecommendations ? 'lg:col-span-8' : ''}`}>
+          {/* Story Templates Section */}
+          <Collapsible open={showTemplates} onOpenChange={setShowTemplates}>
+            <Card>
+              <CollapsibleTrigger asChild>
+                <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
+                  <CardTitle className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Lightbulb className="w-5 h-5 text-primary" />
+                      Story Templates & Prompts
+                    </div>
+                    <ChevronDown 
+                      className={`w-4 h-4 transition-transform ${showTemplates ? 'rotate-180' : ''}`} 
+                    />
+                  </CardTitle>
+                </CardHeader>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <CardContent className="pt-0">
+                  <StoryTemplates
+                    language={prompt ? detectLanguage(prompt) : 'en'}
+                    onTemplateSelect={handleTemplateSelect}
+                    onPromptGenerate={setPrompt}
+                  />
+                </CardContent>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Wand className="w-5 h-5 text-primary" />
+                <MagicWand className="w-5 h-5 text-primary" />
                 Create Your Story
               </CardTitle>
             </CardHeader>
@@ -211,6 +297,26 @@ Title: [Story Title]
                 <label htmlFor="story-prompt" className="text-sm font-medium text-foreground">
                   Story Prompt
                 </label>
+                {selectedTemplate && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 p-2 rounded-md">
+                    <Files className="w-3 h-3" />
+                    <span>Template:</span>
+                    <Badge variant="secondary" className="text-xs">
+                      {selectedTemplate.name}
+                    </Badge>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedTemplate(null)
+                        setPrompt('')
+                      }}
+                      className="h-auto p-1 text-xs"
+                    >
+                      Clear
+                    </Button>
+                  </div>
+                )}
                 <Textarea
                   id="story-prompt"
                   placeholder="Enter your story idea in English or Arabic... / أدخل فكرة قصتك بالعربية أو الإنجليزية..."
@@ -223,7 +329,7 @@ Title: [Story Title]
               
               {prompt && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Languages className="w-4 h-4" />
+                  <Globe className="w-4 h-4" />
                   Detected language: {detectLanguage(prompt) === 'ar' ? 'Arabic العربية' : 'English'}
                 </div>
               )}
@@ -283,12 +389,12 @@ Title: [Story Title]
               >
                 {isGenerating ? (
                   <>
-                    <Sparkles className="w-4 h-4 animate-spin" />
+                    <Star className="w-4 h-4 animate-spin" />
                     Generating Story...
                   </>
                 ) : (
                   <>
-                    <Sparkles className="w-4 h-4" />
+                    <Star className="w-4 h-4" />
                     Generate Story
                   </>
                 )}

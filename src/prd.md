@@ -21,9 +21,14 @@
 ## Essential Features
 
 ### Intelligent Story Generation
-- **What it does**: Creates personalized stories from user prompts using AI, with bilingual support and context awareness
-- **Why it matters**: Removes creative blocks and provides inspiration with cultural and linguistic sensitivity
-- **Success criteria**: Generated stories match user intent and build upon previous narrative context
+- **What it does**: Creates personalized stories from user prompts using AI, with bilingual support, context awareness, and template-based assistance
+- **Why it matters**: Removes creative blocks and provides inspiration with cultural and linguistic sensitivity, while offering structured guidance for different story types
+- **Success criteria**: Generated stories match user intent, build upon previous narrative context, and successfully utilize template guidance
+
+### Story Templates & Prompt System
+- **What it does**: Provides a comprehensive library of story templates, writing prompts, and occasion-based suggestions to inspire creativity
+- **Why it matters**: Offers structured guidance for writers at all levels, helps overcome writer's block, and provides inspiration for specific genres and occasions
+- **Success criteria**: Users successfully utilize templates to create engaging stories, find relevant prompts for their needs, and feel inspired to write more
 
 ### Smart Collection Recommendations
 - **What it does**: Analyzes story content, themes, and metadata to suggest intelligent collection groupings
