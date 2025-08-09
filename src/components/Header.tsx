@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { BookOpen, PenTool, Sparkles, FolderOpen, Heart } from '@phosphor-icons/react'
+import { BookOpen, Pen, Sparkle, FolderOpen, Heart } from '@phosphor-icons/react'
 
 interface HeaderProps {
   activeView: 'generate' | 'history' | 'collections' | 'favorites'
@@ -16,7 +16,7 @@ export function Header({ activeView, onViewChange, storiesCount, collectionsCoun
       <div className="container mx-auto px-4 h-16 flex items-center justify-between max-w-6xl">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center">
-            <Sparkles className="w-5 h-5 text-white" weight="fill" />
+            <Sparkle className="w-5 h-5 text-white" weight="fill" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-foreground">Story Weaver</h1>
@@ -31,7 +31,7 @@ export function Header({ activeView, onViewChange, storiesCount, collectionsCoun
             onClick={() => onViewChange('generate')}
             className="gap-2"
           >
-            <PenTool className="w-4 h-4" />
+            <Pen className="w-4 h-4" />
             Create Story
           </Button>
           

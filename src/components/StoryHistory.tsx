@@ -329,7 +329,7 @@ export function StoryHistory({
                                     <SelectValue placeholder="Select category" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    <SelectItem value="">No Category</SelectItem>
+                                    <SelectItem value="none">No Category</SelectItem>
                                     {categories.map((category) => (
                                       <SelectItem key={category.id} value={category.id}>
                                         <div className="flex items-center gap-2">
@@ -361,7 +361,7 @@ export function StoryHistory({
                                     <SelectValue placeholder="Select collection" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    <SelectItem value="">No Collection</SelectItem>
+                                    <SelectItem value="none">No Collection</SelectItem>
                                     {collections.map((collection) => (
                                       <SelectItem key={collection.id} value={collection.id}>
                                         <div className="flex items-center gap-2">

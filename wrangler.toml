@@ -1,0 +1,49 @@
+# Cloudflare Workers & Pages Configuration
+
+name = "story-weaver"
+main = "src/worker.ts"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Environment variables
+[env.production.vars]
+ENVIRONMENT = "production"
+
+[env.preview.vars]
+ENVIRONMENT = "preview"
+
+# KV Namespaces for data storage
+[[kv_namespaces]]
+binding = "STORIES_KV"
+id = "stories_kv_namespace"
+preview_id = "stories_kv_preview"
+
+[[kv_namespaces]]
+binding = "ANALYTICS_KV"
+id = "analytics_kv_namespace"
+preview_id = "analytics_kv_preview"
+
+# Durable Objects for real-time features (future)
+[[durable_objects.bindings]]
+name = "COLLABORATION"
+class_name = "CollaborationDurableObject"
+
+# R2 Storage for file uploads (future)
+[[r2_buckets]]
+binding = "STORY_ASSETS"
+bucket_name = "story-weaver-assets"
+preview_bucket_name = "story-weaver-assets-preview"
+
+# Analytics Engine
+[[analytics_engine_datasets]]
+binding = "ANALYTICS"
+
+# Build configuration
+[build]
+command = "npm run build"
+publish = "dist"
+
+# Pages configuration for frontend
+[site]
+bucket = "dist"
+entry-point = "workers-site"

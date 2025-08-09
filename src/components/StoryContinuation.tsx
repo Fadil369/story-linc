@@ -7,8 +7,9 @@ import { Separator } from '@/components/ui/separator'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { ArrowRight, Sparkles, Users, BookmarkSimple, Target, Wand, BookOpen } from '@phosphor-icons/react'
+import { ArrowRight, Sparkle, Users, BookmarkSimple, Target, MagicWand, BookOpen } from '@phosphor-icons/react'
 import { Story } from '../App'
+import { spark } from '../lib/mockStoryGenerator'
 import { toast } from 'sonner'
 
 interface ExtractedElement {
@@ -319,7 +320,7 @@ Title: [New Part Title]
       case 'character': return <Users className="w-4 h-4" />
       case 'plotPoint': return <Target className="w-4 h-4" />
       case 'location': return <BookmarkSimple className="w-4 h-4" />
-      case 'theme': return <Sparkles className="w-4 h-4" />
+      case 'theme': return <Sparkle className="w-4 h-4" />
     }
   }
 
@@ -337,7 +338,7 @@ Title: [New Part Title]
       <Card>
         <CardContent className="flex items-center justify-center py-12">
           <div className="text-center space-y-2">
-            <Sparkles className="w-8 h-8 animate-spin mx-auto text-primary" />
+            <Sparkle className="w-8 h-8 animate-spin mx-auto text-primary" />
             <p className="text-muted-foreground">
               {baseStory.language === 'ar' 
                 ? 'استخراج عناصر القصة...'
@@ -467,12 +468,12 @@ Title: [New Part Title]
             >
               {isGenerating ? (
                 <>
-                  <Sparkles className="w-4 h-4 animate-spin" />
+                  <Sparkle className="w-4 h-4 animate-spin" />
                   {baseStory.language === 'ar' ? 'إنشاء التتمة...' : 'Generating...'}
                 </>
               ) : (
                 <>
-                  <Wand className="w-4 h-4" />
+                  <MagicWand className="w-4 h-4" />
                   {baseStory.language === 'ar' ? 'إنشاء التتمة' : 'Generate Continuation'}
                 </>
               )}

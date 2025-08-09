@@ -6,11 +6,14 @@ import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
-import { Sparkles, Wand, Languages, FolderOpen, Tag, BookOpen, Template, ChevronDown } from '@phosphor-icons/react'
+import { Sparkle, MagicWand, Translate, FolderOpen, Tag, BookOpen, FileText, ChevronDown } from '@phosphor-icons/react'
 import { Story, StoryContext, Collection, Category } from '../App'
 import { SmartRecommendations } from './SmartRecommendations'
 import { StoryTemplates } from './StoryTemplates'
 import { type StoryTemplate } from '../data/storyTemplates'
+import { spark } from '../lib/mockStoryGenerator'
+import { logger } from '../lib/logger'
+import { trackStoryGenerated, trackStorySaved, trackUserAction } from '../lib/analytics'
 import { toast } from 'sonner'
 
 interface StoryGeneratorProps {
@@ -47,13 +50,24 @@ export function StoryGenerator({
   const generateStory = async () => {
     if (!prompt.trim()) {
       toast.error('Please enter a story prompt')
+      logger.userAction('Generate Story Failed', { reason: 'Empty prompt' })
       return
     }
 
+    const startTime = Date.now()
     setIsGenerating(true)
+    
     try {
       const language = detectLanguage(prompt)
       const isArabic = language === 'ar'
+      
+      logger.info('Starting story generation', {
+        language,
+        promptLength: prompt.length,
+        hasContext: Object.keys(context.characters).length > 0,
+        selectedCategory,
+        selectedCollection
+      })
       
       // Build context for the AI
       const contextPrompt = buildContextPrompt(prompt, language, context, recentStories)
@@ -75,14 +89,34 @@ export function StoryGenerator({
         createdAt: Date.now(),
         characters: extractCharacters(content),
         themes: extractThemes(content, language),
-        collectionId: selectedCollection || undefined,
-        categoryId: selectedCategory || undefined
+        collectionId: selectedCollection && selectedCollection !== 'none' ? selectedCollection : undefined,
+        categoryId: selectedCategory && selectedCategory !== 'none' ? selectedCategory : undefined
       }
+      
+      const duration = Date.now() - startTime
+      logger.storyGenerated(newStory.id, newStory.language, prompt)
+      logger.performance('Story Generation', duration, {
+        wordCount: content.split(' ').length,
+        hasCharacters: newStory.characters.length > 0,
+        hasThemes: newStory.themes.length > 0
+      })
+      
+      // Track analytics
+      trackStoryGenerated(newStory)
       
       setGeneratedStory(newStory)
       setShowRecommendations(true)
+      
+      toast.success(isArabic ? 'تم إنشاء القصة بنجاح!' : 'Story generated successfully!')
+      
     } catch (error) {
-      console.error('Error generating story:', error)
+      const duration = Date.now() - startTime
+      logger.storyError('Story Generation', error as Error, {
+        prompt,
+        language: detectLanguage(prompt),
+        duration
+      })
+      
       toast.error('Failed to generate story. Please try again.')
     } finally {
       setIsGenerating(false)
@@ -185,6 +219,21 @@ Title: [Story Title]
 
   const saveStory = () => {
     if (generatedStory) {
+      logger.userAction('Save Story', {
+        storyId: generatedStory.id,
+        language: generatedStory.language,
+        hasCollection: !!generatedStory.collectionId,
+        hasCategory: !!generatedStory.categoryId,
+        wordCount: generatedStory.content.split(' ').length
+      })
+      
+      // Track analytics
+      trackStorySaved(generatedStory)
+      trackUserAction('save_story', {
+        language: generatedStory.language,
+        wordCount: generatedStory.content.split(' ').length
+      })
+      
       onStoryGenerated(generatedStory)
       setGeneratedStory(null)
       setPrompt('')
@@ -205,7 +254,7 @@ Title: [Story Title]
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Wand className="w-5 h-5 text-primary" />
+                <MagicWand className="w-5 h-5 text-primary" />
                 Create Your Story
               </CardTitle>
             </CardHeader>
@@ -226,7 +275,7 @@ Title: [Story Title]
               
               {prompt && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Languages className="w-4 h-4" />
+                  <Translate className="w-4 h-4" />
                   Detected language: {detectLanguage(prompt) === 'ar' ? 'Arabic العربية' : 'English'}
                 </div>
               )}
@@ -242,7 +291,7 @@ Title: [Story Title]
                       <SelectValue placeholder="Select a category" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">No Category</SelectItem>
+                      <SelectItem value="none">No Category</SelectItem>
                       {categories.map((category) => (
                         <SelectItem key={category.id} value={category.id}>
                           <div className="flex items-center gap-2">
@@ -265,7 +314,7 @@ Title: [Story Title]
                       <SelectValue placeholder="Select a collection" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">No Collection</SelectItem>
+                      <SelectItem value="none">No Collection</SelectItem>
                       {collections.map((collection) => (
                         <SelectItem key={collection.id} value={collection.id}>
                           <div className="flex items-center gap-2">
@@ -286,12 +335,12 @@ Title: [Story Title]
               >
                 {isGenerating ? (
                   <>
-                    <Sparkles className="w-4 h-4 animate-spin" />
+                    <Sparkle className="w-4 h-4 animate-spin" />
                     Generating Story...
                   </>
                 ) : (
                   <>
-                    <Sparkles className="w-4 h-4" />
+                    <Sparkle className="w-4 h-4" />
                     Generate Story
                   </>
                 )}

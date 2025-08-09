@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { useKV } from '@github/spark/hooks'
+import { useKV } from './hooks/useLocalStorage'
 import { StoryGenerator } from './components/StoryGenerator'
 import { StoryHistory } from './components/StoryHistory'
 import { CollectionsView } from './components/CollectionsView'
 import { FavoritesList } from './components/FavoritesManager'
+import { FeedbackWidget } from './components/FeedbackWidget'
 import { Header } from './components/Header'
 import { toast, Toaster } from 'sonner'
 
@@ -290,6 +291,7 @@ function App() {
         )}
       </main>
       
+      <FeedbackWidget />
       <Toaster position="bottom-right" />
     </div>
   )

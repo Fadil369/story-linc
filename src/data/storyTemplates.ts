@@ -115,7 +115,7 @@ export const storyTemplates: StoryTemplate[] = [
     },
     themes: ['magic', 'destiny', 'wonder', 'transformation'],
     mood: 'mysterious',
-    icon: 'Sparkles',
+    icon: 'Sparkle',
     color: 'bg-purple-500'
   },
 
