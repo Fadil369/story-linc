@@ -1,14 +1,15 @@
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { BookOpen, PenTool, Sparkles } from '@phosphor-icons/react'
+import { BookOpen, PenTool, Sparkles, FolderOpen } from '@phosphor-icons/react'
 
 interface HeaderProps {
-  activeView: 'generate' | 'history'
-  onViewChange: (view: 'generate' | 'history') => void
+  activeView: 'generate' | 'history' | 'collections'
+  onViewChange: (view: 'generate' | 'history' | 'collections') => void
   storiesCount: number
+  collectionsCount: number
 }
 
-export function Header({ activeView, onViewChange, storiesCount }: HeaderProps) {
+export function Header({ activeView, onViewChange, storiesCount, collectionsCount }: HeaderProps) {
   return (
     <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between max-w-6xl">
@@ -31,6 +32,21 @@ export function Header({ activeView, onViewChange, storiesCount }: HeaderProps) 
           >
             <PenTool className="w-4 h-4" />
             Create Story
+          </Button>
+          
+          <Button
+            variant={activeView === 'collections' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => onViewChange('collections')}
+            className="gap-2"
+          >
+            <FolderOpen className="w-4 h-4" />
+            Collections
+            {collectionsCount > 0 && (
+              <Badge variant="secondary" className="ml-1 text-xs">
+                {collectionsCount}
+              </Badge>
+            )}
           </Button>
           
           <Button

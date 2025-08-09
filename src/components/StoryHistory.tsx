@@ -5,26 +5,39 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { BookOpen, Trash, Eye, Play, MagnifyingGlass, Calendar } from '@phosphor-icons/react'
-import { Story } from '../App'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { BookOpen, Trash, Eye, Play, MagnifyingGlass, Calendar, FolderOpen, Tag } from '@phosphor-icons/react'
+import { Story, Collection, Category } from '../App'
 
 interface StoryHistoryProps {
   stories: Story[]
+  collections: Collection[]
+  categories: Category[]
   selectedStory: Story | null
   onSelectStory: (story: Story | null) => void
   onDeleteStory: (storyId: string) => void
   onContinueStory: (story: Story) => void
+  onAddToCollection: (storyId: string, collectionId: string) => void
+  onRemoveFromCollection: (storyId: string) => void
+  onUpdateCategory: (storyId: string, categoryId: string) => void
 }
 
 export function StoryHistory({ 
   stories, 
+  collections,
+  categories,
   selectedStory, 
   onSelectStory, 
   onDeleteStory, 
-  onContinueStory 
+  onContinueStory,
+  onAddToCollection,
+  onRemoveFromCollection,
+  onUpdateCategory
 }: StoryHistoryProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedLanguage, setSelectedLanguage] = useState<'all' | 'ar' | 'en'>('all')
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all')
+  const [selectedCollectionFilter, setSelectedCollectionFilter] = useState<string>('all')
 
   const filteredStories = stories.filter(story => {
     const matchesSearch = !searchQuery || 
@@ -34,8 +47,30 @@ export function StoryHistory({
     
     const matchesLanguage = selectedLanguage === 'all' || story.language === selectedLanguage
     
-    return matchesSearch && matchesLanguage
+    const matchesCategory = selectedCategoryFilter === 'all' || 
+      (selectedCategoryFilter === 'uncategorized' ? !story.categoryId : story.categoryId === selectedCategoryFilter)
+    
+    const matchesCollection = selectedCollectionFilter === 'all' || 
+      (selectedCollectionFilter === 'unorganized' ? !story.collectionId : story.collectionId === selectedCollectionFilter)
+    
+    return matchesSearch && matchesLanguage && matchesCategory && matchesCollection
   })
+
+  const getCollectionName = (collectionId?: string) => {
+    return collections.find(c => c.id === collectionId)?.name || 'No Collection'
+  }
+
+  const getCategoryName = (categoryId?: string) => {
+    return categories.find(c => c.id === categoryId)?.name || 'Uncategorized'
+  }
+
+  const getCollectionColor = (collectionId?: string) => {
+    return collections.find(c => c.id === collectionId)?.color || 'bg-gray-500'
+  }
+
+  const getCategoryColor = (categoryId?: string) => {
+    return categories.find(c => c.id === categoryId)?.color || 'bg-gray-500'
+  }
 
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString(undefined, {
@@ -69,39 +104,91 @@ export function StoryHistory({
       {/* Filters and Search */}
       <Card>
         <CardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <MagnifyingGlass className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search stories..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1">
+                <MagnifyingGlass className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search stories..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              
+              <div className="flex gap-2">
+                <Button
+                  variant={selectedLanguage === 'all' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSelectedLanguage('all')}
+                >
+                  All
+                </Button>
+                <Button
+                  variant={selectedLanguage === 'en' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSelectedLanguage('en')}
+                >
+                  English
+                </Button>
+                <Button
+                  variant={selectedLanguage === 'ar' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSelectedLanguage('ar')}
+                >
+                  العربية
+                </Button>
+              </div>
             </div>
-            
-            <div className="flex gap-2">
-              <Button
-                variant={selectedLanguage === 'all' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedLanguage('all')}
-              >
-                All
-              </Button>
-              <Button
-                variant={selectedLanguage === 'en' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedLanguage('en')}
-              >
-                English
-              </Button>
-              <Button
-                variant={selectedLanguage === 'ar' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedLanguage('ar')}
-              >
-                العربية
-              </Button>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <Tag className="w-4 h-4" />
+                  Filter by Category
+                </div>
+                <Select value={selectedCategoryFilter} onValueChange={setSelectedCategoryFilter}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    <SelectItem value="uncategorized">Uncategorized</SelectItem>
+                    {categories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        <div className="flex items-center gap-2">
+                          <div className={`w-3 h-3 rounded-full ${category.color}`} />
+                          {category.name}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <FolderOpen className="w-4 h-4" />
+                  Filter by Collection
+                </div>
+                <Select value={selectedCollectionFilter} onValueChange={setSelectedCollectionFilter}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Collections</SelectItem>
+                    <SelectItem value="unorganized">Unorganized</SelectItem>
+                    {collections.map((collection) => (
+                      <SelectItem key={collection.id} value={collection.id}>
+                        <div className="flex items-center gap-2">
+                          <div className={`w-3 h-3 rounded-full ${collection.color}`} />
+                          {collection.name}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
           
@@ -125,9 +212,31 @@ export function StoryHistory({
                 </Badge>
               </div>
               
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Calendar className="w-3 h-3" />
-                {formatDate(story.createdAt)}
+              <div className="space-y-2">
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Calendar className="w-3 h-3" />
+                  {formatDate(story.createdAt)}
+                </div>
+                
+                <div className="flex flex-wrap gap-2">
+                  {story.categoryId && (
+                    <Badge variant="outline" className="text-xs">
+                      <div className="flex items-center gap-1">
+                        <div className={`w-2 h-2 rounded-full ${getCategoryColor(story.categoryId)}`} />
+                        {getCategoryName(story.categoryId)}
+                      </div>
+                    </Badge>
+                  )}
+                  
+                  {story.collectionId && (
+                    <Badge variant="outline" className="text-xs">
+                      <div className="flex items-center gap-1">
+                        <FolderOpen className="w-3 h-3" />
+                        {getCollectionName(story.collectionId)}
+                      </div>
+                    </Badge>
+                  )}
+                </div>
               </div>
             </CardHeader>
             
@@ -172,6 +281,66 @@ export function StoryHistory({
                         <span className="text-sm text-muted-foreground">
                           {formatDate(story.createdAt)}
                         </span>
+                      </div>
+                      
+                      <div className="grid md:grid-cols-2 gap-4 mt-4 p-4 bg-muted/50 rounded-lg">
+                        <div className="space-y-2">
+                          <div className="text-sm font-medium flex items-center gap-2">
+                            <Tag className="w-4 h-4" />
+                            Category
+                          </div>
+                          <Select 
+                            value={story.categoryId || ''} 
+                            onValueChange={(value) => onUpdateCategory(story.id, value)}
+                          >
+                            <SelectTrigger className="h-8">
+                              <SelectValue placeholder="Select category" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="">No Category</SelectItem>
+                              {categories.map((category) => (
+                                <SelectItem key={category.id} value={category.id}>
+                                  <div className="flex items-center gap-2">
+                                    <div className={`w-3 h-3 rounded-full ${category.color}`} />
+                                    {category.name}
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <div className="text-sm font-medium flex items-center gap-2">
+                            <FolderOpen className="w-4 h-4" />
+                            Collection
+                          </div>
+                          <Select 
+                            value={story.collectionId || ''} 
+                            onValueChange={(value) => {
+                              if (value) {
+                                onAddToCollection(story.id, value)
+                              } else {
+                                onRemoveFromCollection(story.id)
+                              }
+                            }}
+                          >
+                            <SelectTrigger className="h-8">
+                              <SelectValue placeholder="Select collection" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="">No Collection</SelectItem>
+                              {collections.map((collection) => (
+                                <SelectItem key={collection.id} value={collection.id}>
+                                  <div className="flex items-center gap-2">
+                                    <div className={`w-3 h-3 rounded-full ${collection.color}`} />
+                                    {collection.name}
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
                     </DialogHeader>
                     

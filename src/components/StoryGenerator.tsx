@@ -3,20 +3,26 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Sparkles, Wand, Languages } from '@phosphor-icons/react'
-import { Story, StoryContext } from '../App'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Label } from '@/components/ui/label'
+import { Sparkles, Wand, Languages, FolderOpen, Tag } from '@phosphor-icons/react'
+import { Story, StoryContext, Collection, Category } from '../App'
 import { toast } from 'sonner'
 
 interface StoryGeneratorProps {
   onStoryGenerated: (story: Story) => void
   context: StoryContext
   recentStories: Story[]
+  collections: Collection[]
+  categories: Category[]
 }
 
-export function StoryGenerator({ onStoryGenerated, context, recentStories }: StoryGeneratorProps) {
+export function StoryGenerator({ onStoryGenerated, context, recentStories, collections, categories }: StoryGeneratorProps) {
   const [prompt, setPrompt] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [generatedStory, setGeneratedStory] = useState<Story | null>(null)
+  const [selectedCollection, setSelectedCollection] = useState<string>('')
+  const [selectedCategory, setSelectedCategory] = useState<string>('')
 
   const detectLanguage = (text: string): 'ar' | 'en' => {
     const arabicRegex = /[\u0600-\u06FF]/
@@ -53,7 +59,9 @@ export function StoryGenerator({ onStoryGenerated, context, recentStories }: Sto
         language,
         createdAt: Date.now(),
         characters: extractCharacters(content),
-        themes: extractThemes(content, language)
+        themes: extractThemes(content, language),
+        collectionId: selectedCollection || undefined,
+        categoryId: selectedCategory || undefined
       }
       
       setGeneratedStory(newStory)
@@ -201,6 +209,54 @@ Title: [Story Title]
               Detected language: {detectLanguage(prompt) === 'ar' ? 'Arabic العربية' : 'English'}
             </div>
           )}
+
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="category-select" className="text-sm font-medium flex items-center gap-2">
+                <Tag className="w-4 h-4" />
+                Category (Optional)
+              </Label>
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger id="category-select">
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">No Category</SelectItem>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      <div className="flex items-center gap-2">
+                        <div className={`w-3 h-3 rounded-full ${category.color}`} />
+                        {category.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="collection-select" className="text-sm font-medium flex items-center gap-2">
+                <FolderOpen className="w-4 h-4" />
+                Collection (Optional)
+              </Label>
+              <Select value={selectedCollection} onValueChange={setSelectedCollection}>
+                <SelectTrigger id="collection-select">
+                  <SelectValue placeholder="Select a collection" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">No Collection</SelectItem>
+                  {collections.map((collection) => (
+                    <SelectItem key={collection.id} value={collection.id}>
+                      <div className="flex items-center gap-2">
+                        <div className={`w-3 h-3 rounded-full ${collection.color}`} />
+                        {collection.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
           
           <Button 
             onClick={generateStory} 
