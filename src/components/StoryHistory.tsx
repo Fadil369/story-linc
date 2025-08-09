@@ -10,6 +10,8 @@ import { BookOpen, Trash, Eye, Play, MagnifyingGlass, Calendar, FolderOpen, Tag,
 import { Story, Collection, Category } from '../App'
 import { SmartRecommendations } from './SmartRecommendations'
 import { StoryContinuation } from './StoryContinuation'
+import { SocialShare } from './SocialShare'
+import { FavoritesManager } from './FavoritesManager'
 
 interface StoryHistoryProps {
   stories: Story[]
@@ -383,7 +385,7 @@ export function StoryHistory({
                             </div>
                           </ScrollArea>
                           
-                          <div className="flex gap-2 pt-4 border-t">
+                          <div className="flex flex-wrap gap-2 pt-4 border-t">
                             <Button 
                               onClick={() => setShowContinuation(story)}
                               className="gap-2"
@@ -391,6 +393,10 @@ export function StoryHistory({
                               <ArrowRight className="w-4 h-4" />
                               {story.language === 'ar' ? 'متابعة القصة' : 'Continue Story'}
                             </Button>
+                            
+                            <FavoritesManager story={story} />
+                            <SocialShare story={story} />
+                            
                             <Button 
                               variant="destructive" 
                               size="sm"
@@ -416,6 +422,14 @@ export function StoryHistory({
                       >
                         <ArrowRight className="w-3 h-3" />
                       </Button>
+                      
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <FavoritesManager story={story} className="p-0" />
+                      </div>
+                      
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <SocialShare story={story} className="p-1" />
+                      </div>
                       
                       <Button 
                         size="sm" 

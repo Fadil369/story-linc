@@ -3,6 +3,7 @@ import { useKV } from '@github/spark/hooks'
 import { StoryGenerator } from './components/StoryGenerator'
 import { StoryHistory } from './components/StoryHistory'
 import { CollectionsView } from './components/CollectionsView'
+import { FavoritesList } from './components/FavoritesManager'
 import { Header } from './components/Header'
 import { toast, Toaster } from 'sonner'
 
@@ -101,9 +102,10 @@ function App() {
     themes: [],
     recentPrompts: []
   })
-  const [activeView, setActiveView] = useState<'generate' | 'history' | 'collections'>('generate')
+  const [activeView, setActiveView] = useState<'generate' | 'history' | 'collections' | 'favorites'>('generate')
   const [selectedStory, setSelectedStory] = useState<Story | null>(null)
   const [selectedCollection, setSelectedCollection] = useState<Collection | null>(null)
+  const [favorites, setFavorites] = useKV<any[]>('favorite-stories', [])
 
   const addStory = (story: Story) => {
     setStories(current => [story, ...current])
@@ -236,6 +238,7 @@ function App() {
         onViewChange={setActiveView}
         storiesCount={stories.length}
         collectionsCount={collections.length}
+        favoritesCount={favorites.length}
       />
       
       <main className="container mx-auto px-4 py-8 max-w-6xl">
@@ -266,7 +269,7 @@ function App() {
             onCreateCollection={createCollection}
             onStoryGenerated={addStory}
           />
-        ) : (
+        ) : activeView === 'collections' ? (
           <CollectionsView
             collections={collections}
             stories={stories}
@@ -282,6 +285,8 @@ function App() {
               setActiveView('history')
             }}
           />
+        ) : (
+          <FavoritesList />
         )}
       </main>
       

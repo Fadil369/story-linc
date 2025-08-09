@@ -1,15 +1,16 @@
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { BookOpen, PenTool, Sparkles, FolderOpen } from '@phosphor-icons/react'
+import { BookOpen, PenTool, Sparkles, FolderOpen, Heart } from '@phosphor-icons/react'
 
 interface HeaderProps {
-  activeView: 'generate' | 'history' | 'collections'
-  onViewChange: (view: 'generate' | 'history' | 'collections') => void
+  activeView: 'generate' | 'history' | 'collections' | 'favorites'
+  onViewChange: (view: 'generate' | 'history' | 'collections' | 'favorites') => void
   storiesCount: number
   collectionsCount: number
+  favoritesCount?: number
 }
 
-export function Header({ activeView, onViewChange, storiesCount, collectionsCount }: HeaderProps) {
+export function Header({ activeView, onViewChange, storiesCount, collectionsCount, favoritesCount = 0 }: HeaderProps) {
   return (
     <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between max-w-6xl">
@@ -45,6 +46,21 @@ export function Header({ activeView, onViewChange, storiesCount, collectionsCoun
             {collectionsCount > 0 && (
               <Badge variant="secondary" className="ml-1 text-xs">
                 {collectionsCount}
+              </Badge>
+            )}
+          </Button>
+          
+          <Button
+            variant={activeView === 'favorites' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => onViewChange('favorites')}
+            className="gap-2"
+          >
+            <Heart className="w-4 h-4" />
+            Favorites
+            {favoritesCount > 0 && (
+              <Badge variant="secondary" className="ml-1 text-xs">
+                {favoritesCount}
               </Badge>
             )}
           </Button>
