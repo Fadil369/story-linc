@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Lightbulb, Dice1, Calendar, BookOpen, ArrowRight, Sparkles } from '@phosphor-icons/react'
+import { Lightbulb, Dice1, Calendar, BookOpen, ArrowRight, Sparkle } from '@phosphor-icons/react'
 import { getPromptsByOccasion, getSeasonalPrompts, getRandomPrompt, type PromptSuggestion } from '../data/promptSuggestions'
 import { storyOccasions } from '../data/storyTemplates'
 
@@ -18,10 +18,12 @@ export function PromptSuggestions({ language, onPromptSelect }: PromptSuggestion
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('')
 
   const seasonalPrompts = getSeasonalPrompts()
-  const occasionPrompts = selectedOccasion ? getPromptsByOccasion(selectedOccasion) : []
+  const occasionPrompts = selectedOccasion && selectedOccasion !== 'all' ? getPromptsByOccasion(selectedOccasion) : []
 
   const handleRandomPrompt = () => {
-    const randomPrompt = getRandomPrompt(selectedCategory || undefined, selectedDifficulty || undefined)
+    const category = selectedCategory && selectedCategory !== 'all' ? selectedCategory : undefined
+    const difficulty = selectedDifficulty && selectedDifficulty !== 'all' ? selectedDifficulty : undefined
+    const randomPrompt = getRandomPrompt(category, difficulty)
     const promptText = language === 'ar' ? randomPrompt.promptAr : randomPrompt.prompt
     onPromptSelect(promptText)
   }
@@ -91,7 +93,7 @@ export function PromptSuggestions({ language, onPromptSelect }: PromptSuggestion
                 <SelectValue placeholder={language === 'ar' ? 'الفئة' : 'Category'} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">
+                <SelectItem value="all">
                   {language === 'ar' ? 'جميع الفئات' : 'All Categories'}
                 </SelectItem>
                 <SelectItem value="adventure">
@@ -117,7 +119,7 @@ export function PromptSuggestions({ language, onPromptSelect }: PromptSuggestion
                 <SelectValue placeholder={language === 'ar' ? 'المستوى' : 'Difficulty'} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">
+                <SelectItem value="all">
                   {language === 'ar' ? 'جميع المستويات' : 'All Levels'}
                 </SelectItem>
                 <SelectItem value="beginner">
@@ -133,7 +135,7 @@ export function PromptSuggestions({ language, onPromptSelect }: PromptSuggestion
             </Select>
 
             <Button onClick={handleRandomPrompt} className="gap-2">
-              <Sparkles size={16} />
+              <Sparkle size={16} />
               {language === 'ar' ? 'اقتراح عشوائي' : 'Random Prompt'}
             </Button>
           </div>
@@ -166,7 +168,7 @@ export function PromptSuggestions({ language, onPromptSelect }: PromptSuggestion
             <SelectValue placeholder={language === 'ar' ? 'اختر مناسبة' : 'Select an occasion'} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">
+            <SelectItem value="all">
               {language === 'ar' ? 'جميع المناسبات' : 'All Occasions'}
             </SelectItem>
             {storyOccasions.map(occasion => (

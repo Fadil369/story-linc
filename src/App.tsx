@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useKV } from '@github/spark/hooks'
+import { useKV } from './hooks/useLocalStorage'
 import { StoryGenerator } from './components/StoryGenerator'
 import { StoryHistory } from './components/StoryHistory'
 import { CollectionsView } from './components/CollectionsView'
