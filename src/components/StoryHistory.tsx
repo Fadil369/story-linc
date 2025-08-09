@@ -6,9 +6,10 @@ import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { BookOpen, Trash, Eye, Play, MagnifyingGlass, Calendar, FolderOpen, Tag } from '@phosphor-icons/react'
+import { BookOpen, Trash, Eye, Play, MagnifyingGlass, Calendar, FolderOpen, Tag, ArrowRight } from '@phosphor-icons/react'
 import { Story, Collection, Category } from '../App'
 import { SmartRecommendations } from './SmartRecommendations'
+import { StoryContinuation } from './StoryContinuation'
 
 interface StoryHistoryProps {
   stories: Story[]
@@ -22,6 +23,7 @@ interface StoryHistoryProps {
   onRemoveFromCollection: (storyId: string) => void
   onUpdateCategory: (storyId: string, categoryId: string) => void
   onCreateCollection: (name: string, description: string, color: string) => Collection
+  onStoryGenerated: (story: Story) => void
 }
 
 export function StoryHistory({ 
@@ -35,13 +37,15 @@ export function StoryHistory({
   onAddToCollection,
   onRemoveFromCollection,
   onUpdateCategory,
-  onCreateCollection
+  onCreateCollection,
+  onStoryGenerated
 }: StoryHistoryProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedLanguage, setSelectedLanguage] = useState<'all' | 'ar' | 'en'>('all')
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all')
   const [selectedCollectionFilter, setSelectedCollectionFilter] = useState<string>('all')
   const [highlightedStories, setHighlightedStories] = useState<Story[]>([])
+  const [showContinuation, setShowContinuation] = useState<Story | null>(null)
 
   const handleViewSimilarStories = (stories: Story[]) => {
     setHighlightedStories(stories)
@@ -381,11 +385,11 @@ export function StoryHistory({
                           
                           <div className="flex gap-2 pt-4 border-t">
                             <Button 
-                              onClick={() => onContinueStory(story)}
+                              onClick={() => setShowContinuation(story)}
                               className="gap-2"
                             >
-                              <Play className="w-4 h-4" />
-                              Continue Story
+                              <ArrowRight className="w-4 h-4" />
+                              {story.language === 'ar' ? 'متابعة القصة' : 'Continue Story'}
                             </Button>
                             <Button 
                               variant="destructive" 
@@ -399,6 +403,19 @@ export function StoryHistory({
                           </div>
                         </DialogContent>
                       </Dialog>
+                      
+                      <Button 
+                        size="sm" 
+                        variant="secondary"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setShowContinuation(story)
+                        }}
+                        className="gap-1"
+                        title={story.language === 'ar' ? 'متابعة القصة' : 'Continue Story'}
+                      >
+                        <ArrowRight className="w-3 h-3" />
+                      </Button>
                       
                       <Button 
                         size="sm" 
@@ -446,6 +463,24 @@ export function StoryHistory({
           </div>
         )}
       </div>
+
+      {/* Story Continuation Dialog */}
+      {showContinuation && (
+        <Dialog open={!!showContinuation} onOpenChange={() => setShowContinuation(null)}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+            <ScrollArea className="max-h-[85vh] pr-4">
+              <StoryContinuation
+                baseStory={showContinuation}
+                onContinuationGenerated={(continuation) => {
+                  onStoryGenerated(continuation)
+                  setShowContinuation(null)
+                }}
+                onClose={() => setShowContinuation(null)}
+              />
+            </ScrollArea>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   )
 }

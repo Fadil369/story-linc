@@ -264,6 +264,7 @@ function App() {
             onRemoveFromCollection={removeStoryFromCollection}
             onUpdateCategory={updateStoryCategory}
             onCreateCollection={createCollection}
+            onStoryGenerated={addStory}
           />
         ) : (
           <CollectionsView
