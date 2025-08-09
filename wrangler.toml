@@ -46,4 +46,3 @@ publish = "dist"
 # Pages configuration for frontend
 [site]
 bucket = "dist"
-entry-point = "workers-site"
